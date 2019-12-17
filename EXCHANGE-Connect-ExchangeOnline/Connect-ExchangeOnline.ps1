@@ -1,6 +1,5 @@
-﻿function Connect-ExchangeOnline
-{
-<#
+function Connect-ExchangeOnline {
+    <#
     .SYNOPSIS
         Function to Connect to an Exchange Online
 
@@ -22,41 +21,40 @@
 
     .NOTES
         Francois-Xavier Cat
-        www.lazywinadmin.com
-        @lazywinadm
+        lazywinadmin.com
+        @lazywinadmin
 #>
 
     param
     (
         [system.string]$ConnectionUri = 'https://ps.outlook.com/powershell/',
         [Parameter(Mandatory)]
+        [Alias('RunAs')]
+        [pscredential]
+        [System.Management.Automation.Credential()]
         $Credential
     )
-    PROCESS
-    {
-        TRY
-        {
+    PROCESS {
+        TRY {
             # Make sure the credential username is something like admin@domain.com
-            if ($Credential.username -notlike '*@*')
-            {
+            if ($Credential.username -notlike '*@*') {
                 Write-Error 'Must be email format'
                 break
             }
 
             $Splatting = @{
-                ConnectionUri = $ConnectionUri
+                ConnectionUri     = $ConnectionUri
                 ConfigurationName = 'microsoft.exchange'
-                Authentication = 'Basic'
-                AllowRedirection = $true
+                Authentication    = 'Basic'
+                AllowRedirection  = $true
             }
             IF ($PSBoundParameters['Credential']) { $Splatting.Credential = $Credential }
 
             # Load Exchange cmdlets (Implicit remoting)
-            Import-PSSession -Session (New-pssession @Splatting -ErrorAction Stop) -ErrorAction Stop
+            Import-PSSession -Session (New-PSSession @Splatting -ErrorAction Stop) -ErrorAction Stop
         }
-        CATCH
-        {
-            $Error[0]    
+        CATCH {
+            $PSCmdlet.ThrowTerminatingError($_)
         }
     }
 }

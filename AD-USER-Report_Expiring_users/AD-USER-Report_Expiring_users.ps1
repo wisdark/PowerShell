@@ -1,4 +1,4 @@
-﻿<#
+<#
 .SYNOPSIS
     Script to report expiring user account
 .DESCRIPTION
@@ -17,8 +17,8 @@
     .\AD-USER-Report_Expiring_Users.ps1 -days 5 -EmailFrom "ScriptBox@lazywinadmin.com" -EmailSMTPServer smtp.lazywinadmin.com -EmailTo fxcat@lazywinadmin.com
 .NOTES
     Francois-Xavier Cat
-    www.lazywinadmin.com
-    @lazywinadm
+    lazywinadmin.com
+    @lazywinadmin
 
     VERSION HISTORY
     1.0 2015/02/03    Initial Version
@@ -41,9 +41,8 @@ PARAM (
 
     [String]$EmailSMTPServer = "smtp.contoso.com"
 )
-BEGIN
-{
-    # Add Active Directory Module    
+BEGIN {
+    # Add Active Directory Module
 
     # Define Email Subject
     [String]$EmailSubject = "PS Report-ActiveDirectory-Expiring Users (in the next $days days)"
@@ -51,9 +50,8 @@ BEGIN
 
     # Functions helper
     #  Send from
-    Function Send-Email
-    {
-    <#
+    Function Send-Email {
+        <#
     .SYNOPSIS
         This function allows you to send email
     .DESCRIPTION
@@ -70,8 +68,8 @@ BEGIN
     .NOTES
         Francois-Xavier Cat
         fxcat@lazywinadmin.com
-        www.lazywinadmin.com
-        @lazywinadm
+        lazywinadmin.com
+        @lazywinadmin
 
         VERSION HISTORY
         1.0 2014/12/25     Initial Version
@@ -109,17 +107,19 @@ BEGIN
 
             [String]$Attachment,
 
-            [Parameter(ParameterSetName = "Credential", Mandatory = $true)]
-            [String]$Username,
+            #[Parameter(ParameterSetName = "Credential", Mandatory = $true)]
+            #[String]$Username,
 
-            [Parameter(ParameterSetName = "Credential", Mandatory = $true)]
-            [String]$Password,
+            #[Parameter(ParameterSetName = "Credential", Mandatory = $true)]
+            #[String]$Password,
+
+            [pscredential]$Credential,
 
             [Parameter(Mandatory = $true)]
-            [ValidateScript({
-                # Verify the host is reachable
-                Test-Connection -ComputerName $_ -Count 1 -Quiet
-            })]
+            [ValidateScript( {
+                    # Verify the host is reachable
+                    Test-Connection -ComputerName $_ -Count 1 -Quiet
+                })]
             [string]$SMTPServer,
 
             [ValidateRange(1, 65535)]
@@ -128,12 +128,10 @@ BEGIN
             [Switch]$EnableSSL
         )#PARAM
 
-        PROCESS
-        {
-            TRY
-            {
+        PROCESS {
+            TRY {
                 # Create Mail Message Object
-                $SMTPMessage = New-Object System.Net.Mail.MailMessage
+                $SMTPMessage = New-Object -TypeName System.Net.Mail.MailMessage
                 $SMTPMessage.From = $EmailFrom
                 $SMTPMessage.To = $EmailTo
                 $SMTPMessage.Body = $Body
@@ -145,47 +143,42 @@ BEGIN
                 $SMTPMessage.SubjectEncoding = $Encoding
 
                 # Attachement Parameter
-                IF ($PSBoundParameters['attachment'])
-                {
-                    $SMTPattachment = New-Object -TypeName System.Net.Mail.Attachment($attachment)
-                    $SMTPMessage.Attachments.Add($STMPattachment)
+                IF ($PSBoundParameters['attachment']) {
+                    $SMTPattachment = New-Object -TypeName System.Net.Mail.Attachment -ArgumentList $attachment
+                    $SMTPMessage.Attachments.Add($SMTPattachment)
                 }
 
                 # Create SMTP Client Object
-                $SMTPClient = New-Object Net.Mail.SmtpClient
+                $SMTPClient = New-Object -TypeName Net.Mail.SmtpClient
                 $SMTPClient.Host = $SmtpServer
                 $SMTPClient.Port = $Port
 
                 # SSL Parameter
-                IF ($PSBoundParameters['EnableSSL'])
-                {
+                IF ($PSBoundParameters['EnableSSL']) {
                     $SMTPClient.EnableSsl = $true
                 }
 
                 # Credential Paramenter
-                IF (($PSBoundParameters['Username']) -and ($PSBoundParameters['Password']))
-                {
+                #IF (($PSBoundParameters['Username']) -and ($PSBoundParameters['Password'])) {
+                IF ($PSBoundParameters['Credential']) {
                     # Create Credential Object
-                    $Credentials = New-Object -TypeName System.Net.NetworkCredential
-                    $Credentials.UserName = $username.Split("@")[0]
-                    $Credentials.Password = $Password
+                    #$Credential = New-Object -TypeName System.Net.NetworkCredential
+                    #$Credential.UserName = $username.Split("@")[0]
+                    #$Credential.Password = $Password
 
                     # Add the credentials object to the SMTPClient obj
-                    $SMTPClient.Credentials = $Credentials
+                    $SMTPClient.Credentials = $Credential
                 }
 
                 # Send the Email
                 $SMTPClient.Send($SMTPMessage)
 
             }#TRY
-            CATCH
-            {
-                Write-Warning -message "[PROCESS] Something wrong happened"
-                Write-Warning -Message $Error[0].Exception.Message
+            CATCH {
+                $PSCmdlet.ThrowTerminatingError($_)
             }
         }#Process
-        END
-        {
+        END {
             # Remove Variables
             Remove-Variable -Name SMTPClient
             Remove-Variable -Name Password
@@ -193,12 +186,10 @@ BEGIN
     } #End Function Send-EMail
 
 }
-PROCESS
-{
-    TRY
-    {
+PROCESS {
+    TRY {
         $Accounts = Search-ADAccount -AccountExpiring -SearchBase $SearchBase -TimeSpan "$($days).00:00:00" |
-        Select-Object -Property AccountExpirationDate, Name, Samaccountname, @{ Label = "Manager"; E = { (Get-Aduser(Get-aduser $_ -property manager).manager).Name } }, DistinguishedName
+            Select-Object -Property AccountExpirationDate, Name, Samaccountname, @{ Label = "Manager"; E = { (Get-Aduser(Get-aduser $_ -property manager).manager).Name } }, DistinguishedName
 
         $Css = @"
 <style>
@@ -235,28 +226,23 @@ td {
 
         # Prepare Body
         # If No account to report
-        IF (-not ($accounts))
-        {
+        IF (-not ($accounts)) {
             $body = "No user account expiring in the next $days days to report <br>$PostContent"
         }
-        ELSE
-        {
+        ELSE {
             $body = $Accounts |
-            ConvertTo-Html -head $Css -PostContent $PostContent -PreContent $PreContent
+                ConvertTo-Html -head $Css -PostContent $PostContent -PreContent $PreContent
         }
 
         # Sending email
         Send-Email -SMTPServer $EmailSMTPServer -From $EmailFrom -To $Emailto -BodyIsHTML `
-                   -Subject $EmailSubject -Body $body
+            -Subject $EmailSubject -Body $body
 
     }#TRY
-    CATCH
-    {
-        Write-Warning -Message "[PROCESS] Something happened"
-        Write-Warning -Message $Error[0].Exception.Message
+    CATCH {
+        Throw $_
     }
 }#PROCESS
-END
-{
+END {
 
 }

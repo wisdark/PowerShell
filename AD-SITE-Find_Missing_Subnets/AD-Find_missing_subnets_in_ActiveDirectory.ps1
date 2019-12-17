@@ -1,11 +1,11 @@
 <#
     .SYNOPSIS
-        This script goal is to get all the missing subnets from the 
+        This script goal is to get all the missing subnets from the
         NETLOGON.LOG file from each Domain Controllers in the Active Directory.
         It will copy all the NETLOGON.LOG locally and parse them.
 
     .DESCRIPTION
-        This script goal is to get all the missing subnets from the 
+        This script goal is to get all the missing subnets from the
         NETLOGON.LOG file from each Domain Controllers in the Active Directory.
         It will copy all the NETLOGON.LOG locally and parse them.
 
@@ -30,7 +30,7 @@
 
     .NOTES
         NAME:    TOOL-AD-SITE-Report_Missing_Subnets.ps1
-        AUTHOR:    Francois-Xavier CAT 
+        AUTHOR:    Francois-Xavier CAT
         DATE:    2011/10/11
         EMAIL:    info@lazywinadmin.com
 
@@ -81,7 +81,7 @@ PARAM (
     [Parameter(Mandatory = $true, HelpMessage = "You must specify the Email Server to use (IPAddress or FQDN)")]
     [String]$EmailServer,
 
-    [ValidateRange(0,65535)]
+    [ValidateRange(0, 65535)]
     [int]$EmailServerPort = 25,
 
     [String]$EmailSubject = "Report - Active Directory - SITE - Missing Subnets",
@@ -90,20 +90,17 @@ PARAM (
 
     [Switch]$KeepLogs,
 
-    [ValidateScript({ Test-Path -Path $_})]
+    [ValidateScript( { Test-Path -Path $_ })]
     [String]$HTMLReportPath
 
 )
 
-BEGIN
-{
-    TRY
-    {
+BEGIN {
+    TRY {
         # PATH Information
         $ScriptPath = (Split-Path -Path ((Get-Variable -Name MyInvocation).Value).MyCommand.Path)
         $ScriptPathOutput = $ScriptPath + "\Output"
-        IF (-not (Test-Path -Path $ScriptPathOutput))
-        {
+        IF (-not (Test-Path -Path $ScriptPathOutput)) {
             Write-Verbose -Message "[BEGIN] Creating the Output Folder : $ScriptPathOutput"
             New-Item -Path $ScriptPathOutput -ItemType Directory -ErrorAction 'Stop' | Out-Null
         }
@@ -127,7 +124,7 @@ BEGIN
         "TABLE{border-width: 1px;border-style: solid;border-color: black;border-collapse: collapse}" +
         "TH{border-width: 1px;padding: 3px;border-style: solid;border-color: black;background-color:`"#00297A`";font-color:white}" +
         "TD{border-width: 1px;padding-right: 2px;padding-left: 2px;padding-top: 0px;padding-bottom: 0px;border-style: solid;border-color: black;background-color:white}" +
-        "</style>"+
+        "</style>" +
 
         '<style type="text/css">
         table.gridtable {
@@ -197,19 +194,14 @@ table.gridtable td {
 
 
     }#TRY
-    CATCH
-    {
-        Write-Warning -Message "BEGIN BLOCK - Something went wrong"
-        Write-Warning -Message $Error[0].Exception.Message
+    CATCH {
+        Throw $_
     }#CATCH
 }#BEGIN
 
-PROCESS
-{
-    TRY
-    {
-        FOREACH ($Domain in $Forest.Domains)
-        {
+PROCESS {
+    TRY {
+        FOREACH ($Domain in $Forest.Domains) {
             $DomainName = $Domain.Name.ToUpper()
 
             # Get the names of all the Domain Contollers in $domain
@@ -217,12 +209,10 @@ PROCESS
             $DomainControllers = $domain | ForEach-Object -Process { $_.DomainControllers } | Select-Object -Property Name
 
             # Gathering the NETLOGON.LOG for each Domain Controller
-            Write-Verbose "[PROCESS] FOREST: $ForestName DOMAIN: $domainName - Gathering Logs from Domain controllers"
-            FOREACH ($dc in $DomainControllers)
-            {
+            Write-Verbose -Message "[PROCESS] FOREST: $ForestName DOMAIN: $domainName - Gathering Logs from Domain controllers"
+            FOREACH ($dc in $DomainControllers) {
                 $DCName = $($dc.Name).toUpper()
-                TRY
-                {
+                TRY {
 
                     #######################
                     # COPY NETLOGON Files #
@@ -235,17 +225,15 @@ PROCESS
                     $path = "\\$DCName\admin`$\debug\netlogon.log"
 
                     # Testing the $path
-                    IF ((Test-Path -Path $path) -and ((Get-Item -Path $path).Length -ne $null))
-                    {
-                        IF ((Get-Content -Path $path | Measure-Object -Line).lines -gt 0)
-                        {
+                    IF ((Test-Path -Path $path) -and ($null -ne (Get-Item -Path $path).Length)) {
+                        IF ((Get-Content -Path $path | Measure-Object -Line).lines -gt 0) {
                             #Copy the NETLOGON.log locally for the current DC
                             Write-Verbose -Message "[PROCESS] FOREST: $ForestName DOMAIN: $domainName - $DCName - NETLOGON.LOG - Copying..."
                             Copy-Item -Path $path -Destination $ScriptPathOutput\$DomainName-$DCName-$DateFormat-netlogon.log
 
                             #Export the $LogsLines last lines of the NETLOGON.log and send it to a file
                             ((Get-Content -Path $ScriptPathOutput\$DomainName-$DCName-$DateFormat-netlogon.log -ErrorAction Continue)[$LogsLines .. -1]) |
-                            Out-File -FilePath "$ScriptPathOutput\$DomainName-$DCName.txt" -ErrorAction 'Continue' -ErrorVariable ErrorOutFileNetLogon
+                                Out-File -FilePath "$ScriptPathOutput\$DomainName-$DCName.txt" -ErrorAction 'Continue' -ErrorVariable ErrorOutFileNetLogon
                             Write-Verbose -Message "[PROCESS] FOREST: $ForestName DOMAIN: $domainName - $DCName - NETLOGON.LOG - Copied"
                         }#IF
                         ELSE { Write-Verbose -Message "[PROCESS] FOREST: $ForestName DOMAIN: $domainName - $DCName - NETLOGON File Empty !!" }
@@ -259,24 +247,21 @@ PROCESS
                     ###########################
                     # Combine results
                     $FilesToCombine = Get-Content -Path $ScriptPathOutput\*.txt -ErrorAction SilentlyContinue
-                    IF ($FilesToCombine)
-                    {
+                    IF ($FilesToCombine) {
 
                         # Detect version of the netlogon file
                         # Windows Server 2012
-                        IF ($FilesToCombine[0] -match "\[\d{1,5}\]")
-                        {
+                        IF ($FilesToCombine[0] -match "\[\d{1,5}\]") {
                             Write-Verbose -Message "[PROCESS] FOREST: $ForestName DOMAIN: $domainName - Importing exported data to a CSV format..."
                             Write-Verbose -Message "[PROCESS] FOREST: $ForestName DOMAIN: $domainName - NETLOGON format: 2012"
                             $ImportString = $FilesToCombine | ConvertFrom-Csv -Delimiter ' ' -Header Date, Time, Code, Domain, Error, Name, IPAddress
                         }
 
                         # Windows Server Pre-2012 (2003/2008)
-                        IF($FilesToCombine[0] -notmatch "\[\d{1,5}\]")
-                        {
+                        IF ($FilesToCombine[0] -notmatch "\[\d{1,5}\]") {
                             Write-Verbose -Message "[PROCESS] FOREST: $ForestName DOMAIN: $domainName - Importing exported data to a CSV format..."
                             Write-Verbose -Message "[PROCESS] FOREST: $ForestName DOMAIN: $domainName - NETLOGON format: 2008 and Previous versions"
-                            $ImportString = $FilesToCombine | ConvertFrom-Csv -Delimiter ' ' -Header Date, Time, Domain, Error, Name, IPAddress,Code
+                            $ImportString = $FilesToCombine | ConvertFrom-Csv -Delimiter ' ' -Header Date, Time, Domain, Error, Name, IPAddress, Code
                         }
 
                         # Convert the TXT file to a CSV format
@@ -284,16 +269,15 @@ PROCESS
                         $ImportString = $FilesToCombine | ConvertFrom-Csv -Delimiter ' ' -Header Date, Time, Code, Domain, Error, Name, IPAddress
 
                         # Append Missing Subnet File
-                        $importString | Where-Object { $_.Error -like "*NO_CLIENT_SITE*" } | Export-Csv -LiteralPath $scriptpathOutput\$ForestName-$dateformat-NOCLIENTSITE.csv -Append
+                        $importString | Where-Object -FilterScript { $_.Error -like "*NO_CLIENT_SITE*" } | Export-Csv -LiteralPath $scriptpathOutput\$ForestName-$dateformat-NOCLIENTSITE.csv -Append
                         # Append Other Error File
-                        $importString | Where-Object { $_.Error -notlike "*NO_CLIENT_SITE*" } | Export-Csv -LiteralPath $scriptpathOutput\$ForestName-$dateformat-OTHERERRORS.csv -Append
+                        $importString | Where-Object -FilterScript { $_.Error -notlike "*NO_CLIENT_SITE*" } | Export-Csv -LiteralPath $scriptpathOutput\$ForestName-$dateformat-OTHERERRORS.csv -Append
 
                     }#IF File to Combine
                     ELSE { Write-Verbose -Message "[PROCESS] Nothing to process" }
 
                 }#TRY
-                CATCH
-                {
+                CATCH {
                     Write-Warning -Message "$ForestName - $domainName - $DCName - Something wrong happened"
                     if ($ErrorOutFileNetLogon) { Write-Warning -Message "$ForestName - $domainName - $DCName - Error with Out-File" }
                 }#CATCH
@@ -318,47 +302,40 @@ PROCESS
         $EmailBody += "<h1><u>Forest:</u> $($ForestName.ToUpper())</h1>"
         $EmailBody += "<h2><u>Domain</u>: $($DomainName.ToUpper())</h2>"
         $EmailBody += "<h3>Missing Subnet(s) for $($DomainName.ToUpper())</h3>"
-        IF ($MissingSubnets)
-        {
+        IF ($MissingSubnets) {
             $EmailBody += "<i>List of Active Directory client that can not find their site.<br> You need to add those subnets into the console Active Directory Sites And Services</i>"
-            $EmailBody += $MissingSubnets | Sort-Object IPAddress -Unique | ConvertTo-Html -property IPAddress,Name,Date,Domain,Code, Error -Fragment #|out-string
+            $EmailBody += $MissingSubnets | Sort-Object IPAddress -Unique | ConvertTo-Html -property IPAddress, Name, Date, Domain, Code, Error -Fragment #|out-string
         }
         ELSE { $EmailBody += "<i>No Missing Subnet(s) detected</i>" }
 
         #  OTHER ERRORS
         $EmailBody += "<h2>Other Error(s)</h2>"
-        IF ($OtherErrors)
-        {
+        IF ($OtherErrors) {
             $EmailBody += "<br><font size=`"1`" color=`"red`">"
             # Retrieve Each txt generated from the NETLOGON files
             Get-ChildItem $scriptpathoutput\$DomainName-*.txt -Exclude "*All_Export*" |
-            ForEach-Object{
-                # Get the Other Errors (not Missing subnets)
-                $CurrentFile = Get-Content $_ | Where-Object { $_ -notlike "*NO_CLIENT_SITE*" }
-                IF ($CurrentFile)
-                {
-                    # Write the name of the log, this will help sysadmin to find which side report the error
-                    $EmailBody += "<font size=`"2`"><b>$($_.basename)</b><br></font>"
-                    $EmailBody += "<br><font size=`"1`" color=`"red`">"
-                    FOREACH ($Line in $CurrentFile)
-                    {
-                        $EmailBody += "$line<br>"
-                    }#FOREACH
-                    # Close the FONT block
-                    $EmailBody += "</font>"
-                }#IF
-            }#foreach-object
+                ForEach-Object -Process {
+                    # Get the Other Errors (not Missing subnets)
+                    $CurrentFile = Get-Content $_ | Where-Object -FilterScript { $_ -notlike "*NO_CLIENT_SITE*" }
+                    IF ($CurrentFile) {
+                        # Write the name of the log, this will help sysadmin to find which side report the error
+                        $EmailBody += "<font size=`"2`"><b>$($_.basename)</b><br></font>"
+                        $EmailBody += "<br><font size=`"1`" color=`"red`">"
+                        FOREACH ($Line in $CurrentFile) {
+                            $EmailBody += "$line<br>"
+                        }#FOREACH
+                        # Close the FONT block
+                        $EmailBody += "</font>"
+                    }#IF
+                }#foreach-object
         }
         ELSE { $EmailBody += "<i>No Other Error detected</i>" }
 
     }#TRY
-    CATCH
-    {
-        Write-Warning -Message "[PROCESS] Something wrong happened"
-        Write-Warning -Message $Error[0].Exception.Message
+    CATCH {
+        Throw $_
     }#CATCH
-    FINALLY
-    {
+    FINALLY {
 
 
         ##############
@@ -391,19 +368,16 @@ PROCESS
         # SAVE REPORT #
         ###############
 
-        if ($PSBoundParameters['HTMLReportPath'])
-        {
+        if ($PSBoundParameters['HTMLReportPath']) {
             $FinalEmailBody | Out-File -LiteralPath (Join-Path -Path $HTMLReportPath -ChildPath "$ForestName-$dateformat-Report.html")
         }
     }
 
 }#PROCESS
-END
-{
-    IF (-not $KeepLogs)
-    {
-        Write-Verbose "Cleanup txt and log files..."
-        Remove-item -Path $ScriptpathOutput\*.txt -force
+END {
+    IF (-not $KeepLogs) {
+        Write-Verbose -Message "Cleanup txt and log files..."
+        Remove-Item -Path $ScriptpathOutput\*.txt -force
         Remove-Item -Path $ScriptPathOutput\*.log -force
         Write-Verbose -Message "Script Completed"
     }

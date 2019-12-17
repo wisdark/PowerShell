@@ -1,5 +1,4 @@
-function Get-HelpMessage
-{
+function Get-HelpMessage {
     <#
     .SYNOPSIS
     Function to explain why an error occurred and provides problem-solving information.
@@ -27,7 +26,7 @@ function Get-HelpMessage
     Another installation is already in progress. Complete that installation before proceeding with this install
 
     .EXAMPLE
-    Get-HelpMessage –2147023278 
+    Get-HelpMessage –2147023278
     Another installation is already in progress. Complete that installation before proceeding with this install
 
     .NOTES
@@ -37,5 +36,10 @@ function Get-HelpMessage
     [CmdletBinding()]
     [Alias('HelpMsg')]
     PARAM($Id)
-    [ComponentModel.Win32Exception] $id
+    try {
+        [ComponentModel.Win32Exception] $id
+    }
+    catch {
+        $PSCmdlet.ThrowTerminatingError($_)
+    }
 }

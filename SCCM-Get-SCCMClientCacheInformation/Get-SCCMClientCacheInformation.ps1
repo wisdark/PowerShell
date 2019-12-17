@@ -1,6 +1,5 @@
-﻿function Get-SCCMClientCacheInformation
-{
-<#
+function Get-SCCMClientCacheInformation {
+    <#
     .SYNOPSIS
         Function to get the cache size on a SCCM Client
     .DESCRIPTION
@@ -16,8 +15,8 @@
         This will get the client cache size on the computer Client01
     .NOTES
         Francois-Xavier Cat
-        www.lazywinadmin.com
-        @lazywinadm
+        lazywinadmin.com
+        @lazywinadmin
         github.com/lazywinadmin
 
         1.0 | 2017/11/01 | Francois-Xavier Cat
@@ -26,7 +25,7 @@
             Update Error handling and messages
 #>
     PARAM(
-        [string[]]$ComputerName=".",
+        [string[]]$ComputerName = ".",
 
         [Alias('RunAs')]
         [System.Management.Automation.Credential()]
@@ -34,33 +33,28 @@
         $Credential = [System.Management.Automation.PSCredential]::Empty
     )
 
-    FOREACH ($Computer in $ComputerName)
-    {
+    FOREACH ($Computer in $ComputerName) {
         Write-Verbose -message "[PROCESS] ComputerName: $Computer"
 
         # Define Parameters
         $SplattingWMI = @{
             NameSpace = "ROOT\CCM\SoftMgmtAgent"
-            Class = "CacheConfig"
+            Class     = "CacheConfig"
         }
 
-        IF ($PSBoundParameters['ComputerName'])
-        {
+        IF ($PSBoundParameters['ComputerName']) {
             $SplattingWMI.ComputerName = $Computer
         }
-        IF ($PSBoundParameters['Credential'])
-        {
+        IF ($PSBoundParameters['Credential']) {
             $SplattingWMI.Credential = $Credential
         }
 
-        TRY
-        {
+        TRY {
             # Get the Client information
             Get-WmiObject @SplattingWMI
 
         }
-        CATCH
-        {
+        CATCH {
             Write-Warning -message "[PROCESS] Something Wrong happened with $Computer"
             $Error[0].execption.message
         }

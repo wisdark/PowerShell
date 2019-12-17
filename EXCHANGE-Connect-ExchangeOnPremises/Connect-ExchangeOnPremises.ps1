@@ -1,6 +1,5 @@
-﻿function Connect-ExchangeOnPremises
-{
-<#
+function Connect-ExchangeOnPremises {
+    <#
     .SYNOPSIS
         Function to Connect to an Exchange OnPremises environment
 
@@ -22,21 +21,25 @@
 
     .NOTES
         Francois-Xavier Cat
-        www.lazywinadmin.com
-        @lazywinadm
+        lazywinadmin.com
+        @lazywinadmin
 #>
     PARAM (
-        [Parameter(Mandatory,HelpMessage= 'http://<ServerFQDN>/powershell')]
+        [Parameter(Mandatory, HelpMessage = 'http://<ServerFQDN>/powershell')]
         [system.string]$ConnectionUri,
+
+        [Alias('RunAs')]
+        [pscredential]
+        [System.Management.Automation.Credential()]
         $Credential = [System.Management.Automation.PSCredential]::Empty
     )
 
     $Splatting = @{
-        ConnectionUri = $ConnectionUri
+        ConnectionUri     = $ConnectionUri
         ConfigurationName = 'microsoft.exchange'
     }
-    IF ($PSBoundParameters['Credential']){$Splatting.Credential = $Credential}
+    IF ($PSBoundParameters['Credential']) { $Splatting.Credential = $Credential }
 
     # Load Exchange cmdlets (Implicit remoting)
-    Import-PSSession -Session (New-pssession @Splatting)
+    Import-PSSession -Session (New-PSSession @Splatting)
 }

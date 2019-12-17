@@ -1,9 +1,8 @@
-﻿#requires -Version 3
+#requires -Version 3
 
-function Get-ComputerInfo
-{
+function Get-ComputerInfo {
 
-<#
+    <#
 .SYNOPSIS
    This function query some basic Operating System and Hardware Information from
    a local or remote machine.
@@ -13,9 +12,9 @@ function Get-ComputerInfo
    a local or remote machine.
    It requires PowerShell version 3 for the Ordered Hashtable.
 
-   The properties returned are the Computer Name (ComputerName),the Operating 
-   System Name (OSName), Operating System Version (OSVersion), Memory Installed 
-   on the Computer in GigaBytes (MemoryGB), the Number of 
+   The properties returned are the Computer Name (ComputerName),the Operating
+   System Name (OSName), Operating System Version (OSVersion), Memory Installed
+   on the Computer in GigaBytes (MemoryGB), the Number of
    Processor(s) (NumberOfProcessors), Number of Socket(s) (NumberOfSockets),
    and Number of Core(s) (NumberOfCores).
 
@@ -69,7 +68,7 @@ function Get-ComputerInfo
    NumberOfCores      : 4
 
    ComputerName       : FILESERVER
-   OSName             : Microsoft Windows Server 2008 R2 Standard 
+   OSName             : Microsoft Windows Server 2008 R2 Standard
    OSVersion          : 6.1.7601
    MemoryGB           : 2
    NumberOfProcessors : 1
@@ -100,7 +99,7 @@ function Get-ComputerInfo
    Get-ComputerInfo -ComputerName FILESERVER,SHAREPOINT -ErrorLog d:\MyErrors.log.
 
    ComputerName       : FILESERVER
-   OSName             : Microsoft Windows Server 2008 R2 Standard 
+   OSName             : Microsoft Windows Server 2008 R2 Standard
    OSVersion          : 6.1.7601
    MemoryGB           : 2
    NumberOfProcessors : 1
@@ -129,30 +128,31 @@ function Get-ComputerInfo
    Scripting Games 2013 - Advanced Event #2
 #>
 
- [CmdletBinding()]
+    [CmdletBinding()]
 
     PARAM(
-    [Parameter(ValueFromPipeline=$true)]
-    [String[]]$ComputerName = "LocalHost",
+        [Parameter(ValueFromPipeline = $true)]
+        [String[]]$ComputerName = "LocalHost",
 
-    [String]$ErrorLog = ".\Errors.log",
+        [String]$ErrorLog = ".\Errors.log",
 
-    [Alias("RunAs")]
-    [System.Management.Automation.Credential()]$Credential = [System.Management.Automation.PSCredential]::Empty
+        [Alias("RunAs")]
+        [pscredential]
+        [System.Management.Automation.Credential()]$Credential = [System.Management.Automation.PSCredential]::Empty
     )#PARAM
 
-    BEGIN {}#PROCESS BEGIN
+    BEGIN { }#PROCESS BEGIN
 
-    PROCESS{
+    PROCESS {
         FOREACH ($Computer in $ComputerName) {
             Write-Verbose -Message "PROCESS - Querying $Computer ..."
 
-            TRY{
+            TRY {
                 $Splatting = @{
                     ComputerName = $Computer
                 }
 
-                IF ($PSBoundParameters["Credential"]){
+                IF ($PSBoundParameters["Credential"]) {
                     $Splatting.Credential = $Credential
                 }
 
@@ -179,46 +179,49 @@ function Get-ComputerInfo
                 Write-Verbose -Message "PROCESS - $Computer - Determine the number of Socket(s)/Core(s)"
                 $Cores = 0
                 $Sockets = 0
-                FOREACH ($Proc in $Processors){
-                    IF($Proc.numberofcores -eq $null){
-                        IF ($Proc.SocketDesignation -ne $null){$Sockets++}
+                FOREACH ($Proc in $Processors) {
+                    IF ($null -eq $Proc.numberofcores) {
+                        IF ($null -ne $Proc.SocketDesignation) { $Sockets++ }
                         $Cores++
-                    }ELSE {
+                    }
+                    ELSE {
                         $Sockets++
                         $Cores += $proc.numberofcores
                     }#ELSE
                 }#FOREACH $Proc in $Processors
 
-            }CATCH{
+            }
+            CATCH {
                 $Everything_is_OK = $false
                 Write-Warning -Message "Error on $Computer"
-                $Computer | Out-file -FilePath $ErrorLog -Append -ErrorAction Continue
-                $ProcessError | Out-file -FilePath $ErrorLog -Append -ErrorAction Continue
+                $Computer | Out-File -FilePath $ErrorLog -Append -ErrorAction Continue
+                $ProcessError | Out-File -FilePath $ErrorLog -Append -ErrorAction Continue
                 Write-Warning -Message "Logged in $ErrorLog"
 
             }#CATCH
 
 
-            IF ($Everything_is_OK){
+            IF ($Everything_is_OK) {
                 Write-Verbose -Message "PROCESS - $Computer - Building the Output Information"
                 $Info = [ordered]@{
-                    "ComputerName" = $OperatingSystem.__Server;
-                    "OSName" = $OperatingSystem.Caption;
-                    "OSVersion" = $OperatingSystem.version;
-                    "MemoryGB" = $ComputerSystem.TotalPhysicalMemory/1GB -as [int];
+                    "ComputerName"       = $OperatingSystem.__Server;
+                    "OSName"             = $OperatingSystem.Caption;
+                    "OSVersion"          = $OperatingSystem.version;
+                    "MemoryGB"           = $ComputerSystem.TotalPhysicalMemory/1GB -as [int];
                     "NumberOfProcessors" = $ComputerSystem.NumberOfProcessors;
-                    "NumberOfSockets" = $Sockets;
-                    "NumberOfCores" = $Cores}
+                    "NumberOfSockets"    = $Sockets;
+                    "NumberOfCores"      = $Cores
+                }
 
                 $output = New-Object -TypeName PSObject -Property $Info
                 $output
             } #end IF Everything_is_OK
         }#end Foreach $Computer in $ComputerName
     }#PROCESS BLOCK
-    END{
+    END {
         # Cleanup
         Write-Verbose -Message "END - Cleanup Variables"
-        Remove-Variable -Name output,info,ProcessError,Sockets,Cores,OperatingSystem,ComputerSystem,Processors,
+        Remove-Variable -Name output, info, ProcessError, Sockets, Cores, OperatingSystem, ComputerSystem, Processors,
         ComputerName, ComputerName, Computer, Everything_is_OK -ErrorAction SilentlyContinue
 
         # End

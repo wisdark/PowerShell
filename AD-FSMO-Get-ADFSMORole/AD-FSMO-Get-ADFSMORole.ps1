@@ -1,6 +1,5 @@
-﻿function Get-ADFSMORole
-{
-<#
+function Get-ADFSMORole {
+    <#
 .SYNOPSIS
     Retrieve the FSMO Role in the Forest/Domain.
 .DESCRIPTION
@@ -13,8 +12,8 @@
     Get-ADFSMORole -Credential (Get-Credential -Credential "CONTOSO\SuperAdmin")
 .NOTES
     Francois-Xavier Cat
-    www.lazywinadmin.com
-    @lazywinadm
+    lazywinadmin.com
+    @lazywinadmin
     github.com/lazywinadmin
 
     1.0 | 2016/00/00 | Francois-Xavier Cat
@@ -32,19 +31,16 @@
         [pscredential]
         $Credential = [System.Management.Automation.PSCredential]::Empty
     )#PARAM
-    TRY
-    {
+    TRY {
         # Load ActiveDirectory Module if not already loaded.
         IF (-not (Get-Module -Name ActiveDirectory)) { Import-Module -Name ActiveDirectory -ErrorAction 'Stop' -Verbose:$false }
 
-        IF ($PSBoundParameters['Credential'])
-        {
+        IF ($PSBoundParameters['Credential']) {
             # Query with the credentials specified
             $ForestRoles = Get-ADForest -Credential $Credential -ErrorAction 'Stop' -ErrorVariable ErrorGetADForest
             $DomainRoles = Get-ADDomain -Credential $Credential -ErrorAction 'Stop' -ErrorVariable ErrorGetADDomain
         }
-        ELSE
-        {
+        ELSE {
             # Query with the current credentials
             $ForestRoles = Get-ADForest
             $DomainRoles = Get-ADDomain
@@ -52,17 +48,16 @@
 
         # Define Properties
         $Properties = @{
-            SchemaMaster = $ForestRoles.SchemaMaster
-            DomainNamingMaster = $ForestRoles.DomainNamingMaster
+            SchemaMaster         = $ForestRoles.SchemaMaster
+            DomainNamingMaster   = $ForestRoles.DomainNamingMaster
             InfraStructureMaster = $DomainRoles.InfraStructureMaster
-            RIDMaster = $DomainRoles.RIDMaster
-            PDCEmulator = $DomainRoles.PDCEmulator
+            RIDMaster            = $DomainRoles.RIDMaster
+            PDCEmulator          = $DomainRoles.PDCEmulator
         }
 
         New-Object -TypeName PSObject -Property $Properties
     }
-    CATCH
-    {
+    CATCH {
         $PSCmdlet.ThrowTerminatingError($_)
     }
 }

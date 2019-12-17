@@ -1,7 +1,9 @@
-﻿Function New-SCCMTSAppVariable
-{
+Function New-SCCMTSAppVariable {
     <#
     .SYNOPSIS
+        Function to create a SCCM Task Sequence Application Variable during the OSD
+
+    .DESCRIPTION
         Function to create a SCCM Task Sequence Application Variable during the OSD
 
     .PARAMETER BaseVariableName
@@ -20,28 +22,26 @@
 
     .NOTES
         Francois-Xavier Cat
-        www.lazywinadmin.com
-        @lazywinadm
+        lazywinadmin.com
+        @lazywinadmin
     #>
 
-    PARAM ([String]$BaseVariableName,
-
+    PARAM (
+        [String]$BaseVariableName,
         [String[]]$ApplicationList
     )
 
-    BEGIN
-    {
+    BEGIN {
         # Create an TaskSequence Environment Object
         $TaskSequenceEnvironment = New-Object -COMObject Microsoft.SMS.TSEnvironment
     }
-    PROCESS
-    {
+    PROCESS {
 
         # Create a Counter
         $Counter = 1
 
         # Foreach Application we create an incremented variable
-        $ApplicationList | ForEach-Object {
+        $ApplicationList | ForEach-Object -Process {
 
             # Define the Variable Name
             $Variable = "$BaseVariableName{0:00}" -f $Counter

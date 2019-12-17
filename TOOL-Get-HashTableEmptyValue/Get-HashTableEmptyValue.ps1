@@ -1,6 +1,5 @@
-﻿Function Get-HashTableEmptyValue
-{
-<#
+Function Get-HashTableEmptyValue {
+    <#
 .SYNOPSIS
     This function will get the empty or Null entry of a hashtable object
 .DESCRIPTION
@@ -11,15 +10,14 @@
     Get-HashTableEmptyValue -HashTable $SplattingVariable
 .NOTES
     Francois-Xavier Cat
-    @lazywinadm
-    www.lazywinadmin.com
+    @lazywinadmin
+    lazywinadmin.com
 #>
     PARAM([System.Collections.Hashtable]$HashTable)
 
     $HashTable.GetEnumerator().name |
         ForEach-Object -Process {
-            if($HashTable[$_] -eq "" -or $HashTable[$_] -eq $null)
-            {
+            if ($HashTable[$_] -eq "" -or $null -eq $HashTable[$_]) {
                 Write-Output $_
             }
         }

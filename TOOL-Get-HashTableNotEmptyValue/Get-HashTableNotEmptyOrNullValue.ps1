@@ -1,6 +1,5 @@
-﻿Function Get-HashTableNotEmptyOrNullValue
-{
-<#
+Function Get-HashTableNotEmptyOrNullValue {
+    <#
 .SYNOPSIS
     This function will get the values that are not empty or Null in a hashtable object
 .DESCRIPTION
@@ -11,15 +10,14 @@
     Get-HashTableNotEmptyOrNullValue -HashTable $SplattingVariable
 .NOTES
     Francois-Xavier Cat
-    @lazywinadm
-    www.lazywinadmin.com
+    @lazywinadmin
+    lazywinadmin.com
 #>
     PARAM([System.Collections.Hashtable]$HashTable)
 
     $HashTable.GetEnumerator().name |
         ForEach-Object -Process {
-            if($HashTable[$_] -ne "")
-            {
+            if ($HashTable[$_] -ne "") {
                 Write-Output $_
             }
         }
