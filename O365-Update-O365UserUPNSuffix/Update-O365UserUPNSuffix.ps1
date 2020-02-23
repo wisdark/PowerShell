@@ -51,6 +51,8 @@ function Update-O365UserUPNSuffix {
         lazywinadmin.com
         @lazywinadmin
         github.com/lazywinadmin
+    .LINK
+        https://github.com/lazywinadmin/PowerShell
 #>
 
     [CmdletBinding()]
@@ -109,7 +111,7 @@ function Update-O365UserUPNSuffix {
             }
         }
         CATCH {
-            $Error[0].Exception.Message
+            $PSCmdlet.ThrowTerminatingError($_)
         }
     }
     PROCESS {
@@ -142,7 +144,7 @@ function Update-O365UserUPNSuffix {
             }
         }
         CATCH {
-            $Error[0].Exception.Message
+            $PSCmdlet.ThrowTerminatingError($_)
         }
     }
     END {

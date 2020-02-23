@@ -22,6 +22,8 @@ function Set-RDPDisable {
         Francois-Xavier Cat
         lazywinadmin.com
         @lazywinadmin
+    .LINK
+        https://github.com/lazywinadmin/PowerShell
 #>
     [CmdletBinding(SupportsShouldProcess = $true)]
     PARAM (
@@ -37,7 +39,7 @@ function Set-RDPDisable {
                         $regkey.SetValue("fDenyTSConnections", 1)
                         $regKey.flush()
                         $regKey.Close()
-                    } #IF Test-Connection
+                    }
                 }
             } #Try
             CATCH {

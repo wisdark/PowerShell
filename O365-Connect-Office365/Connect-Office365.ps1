@@ -19,6 +19,8 @@ function Connect-Office365 {
     Francois-Xavier Cat
     lazywinadmin.com
     @lazywinadmin
+.LINK
+    https://github.com/lazywinadmin/PowerShell
 #>
     [CmdletBinding()]
     PARAM (
@@ -38,7 +40,6 @@ function Connect-Office365 {
             }
         }
         CATCH {
-            Write-Warning -Message "BEGIN - Something went wrong!"
             IF ($ErrorBeginIpmoMSOnline) {
                 Write-Warning -Message "BEGIN - Error while importing MSOnline module"
             }
@@ -46,7 +47,7 @@ function Connect-Office365 {
                 Write-Warning -Message "BEGIN - Error while importing LyncOnlineConnector module"
             }
 
-            Write-Warning -Message $error[0].exception.message
+            $PSCmdlet.ThrowTerminatingError($_)
         }
     }
     PROCESS {

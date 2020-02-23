@@ -19,6 +19,8 @@ Function Get-AccountLockedOut {
 
 .EXAMPLE
     Get-AccountLockedOut -UserName "Francois-Xavier.cat" -StartTime (Get-Date).AddDays(-2)
+.LINK
+    https://github.com/lazywinadmin/PowerShell
 #>
 
     #Requires -Version 3.0
@@ -66,8 +68,7 @@ Function Get-AccountLockedOut {
             Write-Verbose -Message "[BEGIN] PDC is $(Get-PDCServer)"
         }#TRY
         CATCH {
-            Write-Warning -Message "[BEGIN] Something wrong happened"
-            Write-Warning -Message $Error[0]
+            $PSCmdlet.ThrowTerminatingError($_)
         }
 
     }#BEGIN

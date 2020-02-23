@@ -20,6 +20,8 @@ function Resolve-ShortURL {
     lazywinadmin.com
     @lazywinadmin
     github.com/lazywinadmin
+.LINK
+    https://github.com/lazywinadmin/PowerShell
 #>
 
     [CmdletBinding()]
@@ -35,7 +37,7 @@ function Resolve-ShortURL {
             (Invoke-WebRequest -Uri $URL -MaximumRedirection 0 -ErrorAction Ignore).Headers.Location
         }
         CATCH {
-            Write-Error -Message $Error[0].Exception.Message
+            $PSCmdlet.ThrowTerminatingError($_)
         }
     }
 }
